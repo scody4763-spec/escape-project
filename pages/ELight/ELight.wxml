@@ -1,0 +1,91 @@
+<!-- 卡片位置控制 -->
+<view class="BJmain">
+  <view class="mainbj">
+    <view class="textandima">
+      <view class="CPtext">走廊的指示牌</view>
+      <view class="CPimage">
+        <view class="{{dTaicss}}"></view>
+        <view class="{{dTaicss}}" style="animation-delay: 0.6s;"></view>
+        <image style="height: 120px; z-index: 999;" src="{{titleimg}}" mode="aspectFit" />
+      </view>
+    </view>
+
+    <view class="escape-toggle escape-toggle-top" wx:if="{{!escapeMode}}">
+      <button class="escape-btn-test" bindtap="startEscape">开始逃生模式</button>
+    </view>
+
+    <view class="data-grid">
+      <view class="data-card card-temp">
+        <view class="data-label">温度</view>
+        <view class="data-value">{{now.temper}}</view>
+      </view>
+      <view class="data-card card-hum">
+        <view class="data-label">湿度</view>
+        <view class="data-value">{{now.hud}}</view>
+      </view>
+      <view class="data-card card-status">
+        <view class="data-label">状态</view>
+        <view class="data-value">{{now.HUD}}</view>
+      </view>
+      <view class="data-card card-aqi">
+        <view class="data-label">空气质量</view>
+        <view class="data-value">{{now.AQI}}</view>
+      </view>
+      <view class="data-card card-tvoc">
+        <view class="data-label">TVOC</view>
+        <view class="data-value">{{now.TVOC}}</view>
+      </view>
+      <view class="data-card card-co2">
+        <view class="data-label">CO2</view>
+        <view class="data-value">{{now.ECO2}}</view>
+      </view>
+      <view class="data-card card-fire">
+        <view class="data-label">火灾概率</view>
+        <view class="data-value">{{now.probability}}</view>
+      </view>
+      <view class="data-card card-hot">
+        <view class="data-label">高温像素数</view>
+        <view class="data-value">{{now.hotPixels}}</view>
+      </view>
+    </view>
+    <!-- 空气质量等级：1=优 2=良 3=轻度污染 4=中度污染 5=重度污染 -->
+  </view>
+
+  <!-- 逃生模式区域 -->
+  <view class="escape-panel" wx:if="{{escapeMode}}">
+    <view class="escape-header">
+      <text class="escape-title">🔥 火灾逃生模式</text>
+      <view class="escape-badge">逃生中</view>
+    </view>
+
+    <view class="escape-direction">
+      <view class="escape-arrow">{{directionArrow}}</view>
+      <view class="escape-text">请向{{escapeDirection || '前方'}}逃生</view>
+    </view>
+
+    <view class="escape-info">
+      <view class="escape-item">
+        <text class="escape-label">当前位置：</text>
+        <text class="escape-value">{{currentLocation}}</text>
+      </view>
+      <view class="escape-item">
+        <text class="escape-label">最近出口：</text>
+        <text class="escape-value">{{exitName}}</text>
+      </view>
+      <view class="escape-item">
+        <text class="escape-label">距离：</text>
+        <text class="escape-value">{{distance}} 米</text>
+      </view>
+      <view class="escape-item">
+        <text class="escape-label">预计时间：</text>
+        <text class="escape-value">{{estimatedTime}} 秒</text>
+      </view>
+    </view>
+
+    <view class="escape-actions">
+      <button class="escape-btn-stop" bindtap="stopEscape">停止逃生</button>
+      <button class="escape-btn-danger" bindtap="call119">📞 拨打119</button>
+      <button class="escape-btn-voice" bindtap="playVoiceGuide">🔊 语音指引</button>
+    </view>
+  </view>
+</view>

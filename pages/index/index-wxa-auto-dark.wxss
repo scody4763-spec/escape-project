@@ -1,0 +1,54 @@
+/* 
+此文件为开发者工具生成，生成时间: 2023/11/16上午10:55:27
+使用方法：
+在 index.wxss 文件末尾引入样式
+```
+@import "./index-wxa-auto-dark.wxss";
+```
+ */
+
+@media (prefers-color-scheme: dark) {
+    .body {
+        background-color: rgb(29, 29, 29);
+    }
+
+    .line {
+        background: rgb(83, 83, 83);
+    }
+
+    .dian1 {
+        background: rgb(64, 64, 64);
+    }
+
+    .dian2 {
+        background: rgb(118, 164, 236);
+    }
+
+    .dian3 {
+        background: rgb(2, 96, 0);
+    }
+
+    .dian4 {
+        background: rgb(105, 58, 0);
+    }
+
+    .dian5 {
+        background: rgb(224, 54, 8);
+    }
+
+    .dian {
+        background: rgb(64, 64, 64);
+    }
+
+    .h2 {
+        color: rgb(186, 178, 178);
+    }
+
+    .tab_item {
+        background: rgb(17, 17, 17);
+    }
+
+    .tag-txt {
+        color: rgb(51, 30, 12);
+    }
+}

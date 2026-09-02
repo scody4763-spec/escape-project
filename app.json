@@ -1,0 +1,49 @@
+{
+  "cloud": true,
+  "pages": [
+    "pages/index/index",
+    "pages/ECLight/ECLight",
+    "pages/CLight/CLight",
+    "pages/ELight/ELight",
+    "pages/more/more",
+    "pages/logs/logs"
+  ],
+
+  "tabBar": {
+    "selectedColor": "#31869B",
+    "borderStyle": "black",
+    "list": [{
+        "pagePath": "pages/index/index",
+        "iconPath": "./pages/img/menber0.png",
+        "selectedIconPath": "./pages/img/menber.png",
+        "text": "设备"
+      },
+      {
+        "pagePath": "pages/more/more",
+        "iconPath": "./pages/img/more0.png",
+        "selectedIconPath": "/pages/img/more.png",
+        "text": "更多"
+
+      }
+    ]
+  },
+
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "Weixin",
+    "navigationBarTextStyle": "black"
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于获取当前位置以计算逃生路线"
+    }
+  },
+  "requiredPrivateInfos": [
+    "getLocation",
+    "startLocationUpdate",
+    "onLocationChange"
+  ],
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

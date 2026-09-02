@@ -1,0 +1,126 @@
+<!-- #0061b0 -->
+
+<view class="body">
+  <view class="tab_item" id="tab">
+    <view class="item-data">
+      <view class="table">
+        <!-- 表格第二行 -->
+        <view class="tr">
+          <view class="td">
+            <view class="{{now.co2color}}"></view> co2
+          </view>
+          <view class="td1">{{now.co2}}</view>
+          <view class="td">
+            <view class="{{now.CH2Ocolor}}"></view>CH20
+          </view>
+          <view class="td1">{{now.CH2O}}</view>
+        </view>
+
+        <!-- 表格第三行 -->
+        <view class="tr">
+          <view class="td">
+            <view class="{{now.TEMPERcolor}}"></view>TEMPER
+            </view>
+          <view class="td1">{{now.TEMPER}}</view>
+          <view class="td">
+            <view class="{{now.HUDcolor}}"></view>HUD
+          </view>
+          <view class="td1">{{now.HUD}}</view>
+        </view>
+
+        <!-- 表格第四行 -->
+        <view class="tr">
+          <view class="td">
+            <view class="{{now.TVOCcolor}}"></view>tvoc
+          </view>
+          <view class="td1">{{now.TVOC}}</view>
+          <view class="td">
+            <view class="{{now.PM2_5color}}"></view>pm2.5
+          </view>
+          <view class="td1">{{now.PM2_5}}</view>
+        </view>
+        <!-- 表格第五行 -->
+        <view class="tr">
+          <view class="td">
+            <view class="{{now.PM10color}}" />pm10
+          </view>
+          <view class="td1">{{now.PM10}}</view>
+          <view class="td"> </view>
+          <view class="td1"></view>
+        </view>
+
+      </view>
+    </view>
+  </view>
+
+  <view class="tab_item">
+    <view class="tr">
+      <view class="td">
+        On/off
+      </view>
+      <view class="td1"></view>
+      <view class="td">
+        <view class=""></view>
+      </view>
+      <view class="td1">
+        <switch checked="" bindchange="light" style="height: 30px;" />
+      </view>
+    </view>
+
+    <view class="tr">
+      <view class="td" style="font-size: 17px;">
+        Brightness
+      </view>
+      <view class="td-75">
+        <slider bindchange="slider4change" step="1" min="1" max="101" show-value />
+      </view>
+
+
+    </view>
+
+  </view>
+
+
+  <view class="tab_item">
+    <view class="echartsbox">
+      <ec-canvas type="2d" id="mychart-dom-bar" class="echarts" ec="{{ ec1 }}"></ec-canvas>
+    </view>
+  </view>
+
+  <view class="tab_item">
+    <view class="echartsbox">
+      <ec-canvas type="2d" id="mychart-dom-bar+ch2o" class="echarts" ec="{{ ec2 }}"></ec-canvas>
+    </view>
+  </view>
+
+  <view class="tab_item">
+    <view class="echartsbox">
+      <ec-canvas type="2d" id="mychart-dom-bar" class="echarts" tycanvas-id="mychart-bar" ec="{{ ec3 }}"></ec-canvas>
+    </view>
+  </view>
+
+  <view class="tab_item">
+    <view class="echartsbox">
+      <ec-canvas type="2d" id="mychart-dom-bar" class="echarts" tycanvas-id="mychart-bar" ec="{{ ec4 }}"></ec-canvas>
+    </view>
+  </view>
+
+  <view class="tab_item">
+    <view class="echartsbox">
+      <ec-canvas type="2d" id="mychart-dom-bar" class="echarts" tycanvas-id="mychart-bar" ec="{{ ec5 }}"></ec-canvas>
+    </view>
+  </view>
+
+  <view class="tab_item">
+    <view class="echartsbox">
+      <ec-canvas type="2d" id="mychart-dom-bar" class="echarts" tycanvas-id="mychart-bar" ec="{{ ec6 }}"></ec-canvas>
+    </view>
+  </view>
+
+  <view class="tab_item">
+    <view class="echartsbox">
+      <ec-canvas type="2d" id="mychart-dom-bar" class="echarts" tycanvas-id="mychart-bar" ec="{{ ec7 }}"></ec-canvas>
+    </view>
+  </view>
+
+</view>

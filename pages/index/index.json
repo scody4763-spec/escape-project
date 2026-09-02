@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "云优径",
+  "usingComponents": {},
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#eee"
+}

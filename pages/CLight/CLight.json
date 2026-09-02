@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "Air Quality Monitoring Ceiling Lamps",
+  "usingComponents": {
+    "ec-canvas": "/ec-canvas/ec-canvas"
+  }
+}
