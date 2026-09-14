@@ -1,12 +1,11 @@
 {
-  "cloud": true,
   "pages": [
     "pages/index/index",
     "pages/ECLight/ECLight",
-    "pages/CLight/CLight",
     "pages/ELight/ELight",
     "pages/more/more",
-    "pages/logs/logs"
+    "pages/about/about"
+
   ],
 
   "tabBar": {
@@ -35,6 +34,9 @@
     "navigationBarTextStyle": "black"
   },
   "permission": {
+    "scope.bluetooth": {
+      "desc": "用于扫描蓝牙信标以计算逃生路线"
+    },
     "scope.userLocation": {
       "desc": "用于获取当前位置以计算逃生路线"
     }

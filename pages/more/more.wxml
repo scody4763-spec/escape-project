@@ -3,7 +3,7 @@
 <view class="usersmain">
 <!-- 用户资料 -->
     <view class="userhand">
-        <image src="/pages/images/user/user.jpg" mode="aspectFill" class="userimg"/>
+        <image src="/pages/images/user/关于我们.png" mode="aspectFill" class="userimg"/>
     </view>
     <view class="username">
         ECho
@@ -31,22 +31,7 @@
          <text style="font-size: 35rpx; padding-left: 30rpx; font-weight: 700;">更多服务</text>
         </view>
         <view class="otherbox">
-            <!-- <view class="boxContent"><image src="/pages/images/user/设置.png" mode="aspectFit" class="otheriam"></image><text class="othertext">软件设置</text><image src="/pages/images/user/icon-right.png" mode="aspectFit" class="otherima"></image></view>
-
-            <view class="boxContent"><image src="/pages/images/user/网络.png" mode="aspectFit" class="otheriam"></image><text class="othertext">设备配网</text><image src="/pages/images/user/icon-right.png" mode="aspectFit" class="otherima"></image></view>
-
-            <view class="boxContent"><image src="/pages/images/user/帮助.png" mode="aspectFit" class="otheriam"></image><text class="othertext">帮助中心</text><image src="/pages/images/user/icon-right.png" mode="aspectFit" class="otherima"></image></view>
-
-            <view class="boxContent"><image src="/pages/images/user/用户协议.png" mode="aspectFit" class="otheriam"></image><text class="othertext">用户协议</text><image src="/pages/images/user/icon-right.png" mode="aspectFit" class="otherima"></image></view>
-
-            <view class="boxContent"><image src="/pages/images/user/隐私.png" mode="aspectFit" class="otheriam"></image><text class="othertext">隐私政策</text><image src="/pages/images/user/icon-right.png" mode="aspectFit" class="otherima"></image></view>
-
-            <view class="boxContent"><image src="/pages/images/user/关于.png" mode="aspectFit" class="otheriam"></image><text class="othertext">关于云优径</text><image src="/pages/images/user/icon-right.png" mode="aspectFit" class="otherima" style="margin-left: 365rpx;"></image></view> -->
-
-            <view class="boxContent"><image src="/pages/images/user/退出.png" mode="aspectFit" class="otheriam"></image><text class="othertext">退出登录</text><image src="/pages/images/user/icon-right.png" mode="aspectFit" class="otherima"></image></view>
+            <view class="boxContent" bindtap="goAbout"><image src="/pages/images/user/关于.png" mode="aspectFit" class="otheriam"></image><text class="othertext">关于云优径</text><image src="/pages/images/user/icon-right.png" mode="aspectFit" class="otherima"></image></view>
         </view>
     </view>
 </view>
-
-
-

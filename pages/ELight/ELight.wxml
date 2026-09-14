@@ -1,57 +1,16 @@
-<!-- 卡片位置控制 -->
+<!-- 逃生模式页面 -->
 <view class="BJmain">
-  <view class="mainbj">
-    <view class="textandima">
-      <view class="CPtext">走廊的指示牌</view>
-      <view class="CPimage">
-        <view class="{{dTaicss}}"></view>
-        <view class="{{dTaicss}}" style="animation-delay: 0.6s;"></view>
-        <image style="height: 120px; z-index: 999;" src="{{titleimg}}" mode="aspectFit" />
-      </view>
+  <!-- 非逃生模式：显示等待界面 -->
+  <view class="mainbj" wx:if="{{!escapeMode}}">
+    <view class="waiting-panel">
+      <image class="waiting-icon" src="./img/双向.png" mode="aspectFit" />
+      <text class="waiting-title">应急指示灯</text>
+      <text class="waiting-desc">等待火警信号中…</text>
+      <button class="escape-btn-test" bindtap="startEscape">开始逃生模式（测试）</button>
     </view>
-
-    <view class="escape-toggle escape-toggle-top" wx:if="{{!escapeMode}}">
-      <button class="escape-btn-test" bindtap="startEscape">开始逃生模式</button>
-    </view>
-
-    <view class="data-grid">
-      <view class="data-card card-temp">
-        <view class="data-label">温度</view>
-        <view class="data-value">{{now.temper}}</view>
-      </view>
-      <view class="data-card card-hum">
-        <view class="data-label">湿度</view>
-        <view class="data-value">{{now.hud}}</view>
-      </view>
-      <view class="data-card card-status">
-        <view class="data-label">状态</view>
-        <view class="data-value">{{now.HUD}}</view>
-      </view>
-      <view class="data-card card-aqi">
-        <view class="data-label">空气质量</view>
-        <view class="data-value">{{now.AQI}}</view>
-      </view>
-      <view class="data-card card-tvoc">
-        <view class="data-label">TVOC</view>
-        <view class="data-value">{{now.TVOC}}</view>
-      </view>
-      <view class="data-card card-co2">
-        <view class="data-label">CO2</view>
-        <view class="data-value">{{now.ECO2}}</view>
-      </view>
-      <view class="data-card card-fire">
-        <view class="data-label">火灾概率</view>
-        <view class="data-value">{{now.probability}}</view>
-      </view>
-      <view class="data-card card-hot">
-        <view class="data-label">高温像素数</view>
-        <view class="data-value">{{now.hotPixels}}</view>
-      </view>
-    </view>
-    <!-- 空气质量等级：1=优 2=良 3=轻度污染 4=中度污染 5=重度污染 -->
   </view>
 
-  <!-- 逃生模式区域 -->
+  <!-- 逃生模式面板 -->
   <view class="escape-panel" wx:if="{{escapeMode}}">
     <view class="escape-header">
       <text class="escape-title">🔥 火灾逃生模式</text>

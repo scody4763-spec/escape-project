@@ -1,5 +1,5 @@
 // 记得加上const
-import mqtt from "../../utils/mqtt.min.js"
+const createMqttClient = require('../../utils/wxmqtt')
 
 function randomString(len) {
   len = len || 32;
@@ -19,7 +19,7 @@ Page({
    */
   data: {
     client: null,
-    host: "www.guideylz.cn",
+    host: "42.193.218.29",
     subTopic: "ESP32/D8:BC:38:78:24:B8/status",  // 订阅
     pubTopic: "ESP32/D8:BC:38:78:24:B8/public", //应急灯 发布
     pubMsg: '{"ESP32_D8:BC:38:78:24:5C":{"display":"right"}}',
@@ -51,85 +51,57 @@ Page({
   },
 
   connect() {
-    // MQTT-WebSocket 统一使用 /path 作为连接路径，连接时需指明，但在 EMQX Cloud 部署上使用的路径为 /mqtt
-    // 因此不要忘了带上这个 /mqtt !!!
-    // 微信小程序中需要将 wss 协议写为 wxs，且由于微信小程序出于安全限制，不支持 ws 协议
     try {
-      this.data.client = mqtt.connect(`wxs://${this.data.host}:8084/mqtt`, {
-        ...this.data.mqttOptions,
-      });
-
-      this.data.client.on("connect", () => {
-        console.log("连接成功"),
-
-          //收到消息
-          this.data.client.on("message", (topic, payload) => {
-            const currMsg = this.data.receivedMsg ? `<br/>${payload}` : payload;
-            this.setValue("receivedMsg", this.data.receivedMsg.concat(currMsg));
-            console.log("topic:" + topic);
-            console.log("payload:" + payload);
-            let a = JSON.parse(payload)
-            console.log(a[this.data.MAC])
-            switch (a[this.data.MAC].display) {
-              case 'left':
-                this.setValue('titleimg', "./img/向左.png")
-                break;
-              case 'Left':
-                this.setValue('titleimg', "./img/向左.png")
-                break;
-              case 'right':
-                this.setValue('titleimg', "./img/向右.png")
-                break;
-              case 'Right':
-                this.setValue('titleimg', "./img/向右.png")
-                break;
-              case 'Center':
-                this.setValue('titleimg', "./img/双向.png")
-                break;
-              case 'center':
-                this.setValue('titleimg', "./img/双向.png")
-                break;
-              case 'up':
-                this.setValue('titleimg', "./img/向上.png")
-                break;
-              case 'Up':
-                this.setValue('titleimg', "./img/向上.png")
-                break;
-              case 'down':
-                this.setValue('titleimg', "./img/向下.png")
-                break;
-              case 'Down':
-                this.setValue('titleimg', "./img/向下.png")
-                break;
-              default:
-                break;
-            }
-            this.setData({
-              now: {
-                temper: a['ESP32_40:91:51:84:94:C0'].temp,
-                adc: a['ESP32_40:91:51:84:94:C0'].adc,
-                hud: a['ESP32_40:91:51:84:94:C0'].hum,
+      this.data.client = createMqttClient({
+        url: 'wss://42.193.218.29:8084/mqtt',
+        username: 'xcx_eclight',
+        password: 'xcx_eclight',
+        clientId: randomString(30),
+        onConnect: () => {
+          console.log('ECLight 连接成功');
+          this.data.client.subscribe(this.data.subTopic);
+        },
+        onMessage: (topic, payload) => {
+          console.log("topic:" + topic);
+          console.log("payload:" + payload);
+          try {
+            let a = JSON.parse(payload);
+            if (a[this.data.MAC] && a[this.data.MAC].display) {
+              switch (a[this.data.MAC].display) {
+                case 'left': case 'Left':
+                  this.setValue('titleimg', "./img/向左.png"); break;
+                case 'right': case 'Right':
+                  this.setValue('titleimg', "./img/向右.png"); break;
+                case 'center': case 'Center':
+                  this.setValue('titleimg', "./img/双向.png"); break;
+                case 'up': case 'Up':
+                  this.setValue('titleimg', "./img/向上.png"); break;
+                case 'down': case 'Down':
+                  this.setValue('titleimg', "./img/向下.png"); break;
               }
-            });
-            console.log(a);
-            console.log(a[this.data.MAC]);
-          });
-
-        this.data.client.on("error", (error) => {
-          console.log("onError", error);
-        });
-
-        this.data.client.on("reconnect", () => {
-          console.log("重新连接...");
-        });
-
-        this.data.client.on("offline", () => {
-          console.log("已脱机");
-        });
-        // 更多 MQTT.js 相关 API 请参阅 https://github.com/mqttjs/MQTT.js#api
+            }
+            if (a['ESP32_40:91:51:84:94:C0']) {
+              this.setData({
+                now: {
+                  temper: a['ESP32_40:91:51:84:94:C0'].temp,
+                  adc: a['ESP32_40:91:51:84:94:C0'].adc,
+                  hud: a['ESP32_40:91:51:84:94:C0'].hum,
+                }
+              });
+            }
+          } catch (e) {
+            console.log('parse error', e);
+          }
+        },
+        onError: (error) => {
+          console.log('ECLight onError', error);
+        },
+        onClose: () => {
+          console.log('ECLight 已断开');
+        }
       });
+      this.data.client.connect();
     } catch (error) {
-
       console.log("mqtt.connect error", error);
     }
   },
@@ -152,9 +124,10 @@ Page({
 
   //断开连接
   disconnect() {
-    this.data.client.end()
-    this.data.client = null
-    console.log("已断开连接");
+    if (this.data.client) {
+      this.data.client.end();
+      this.data.client = null;
+    }
   },
 
   //发布
@@ -197,9 +170,11 @@ Page({
   },
 
 
+  // ===== 静态方向 =====
+
   //静态左
   changeleft() {
-    let Msg = `{"${this.data.MAC}":{"display_left":"left","display_right":"left"}}`
+    let Msg = `{"${this.data.MAC}":{"display_left":"left","display_mid":"left","display_right":"left"}}`
     this.publish(Msg)
     this.setData({
       titleimg: "./img/向左.png",
@@ -209,7 +184,7 @@ Page({
 
   //静态右
   changeright() {
-    let Msg = `{"${this.data.MAC}":{"display_left":"right","display_right":"right"}}`
+    let Msg = `{"${this.data.MAC}":{"display_left":"right","display_mid":"right","display_right":"right"}}`
     this.publish(Msg)
     this.setData({
       titleimg: "./img/向右.png",
@@ -219,7 +194,7 @@ Page({
 
   //静态双向
   changecenter() {
-    let Msg = `{"${this.data.MAC}":{"display_left":"left","display_right":"right"}}`
+    let Msg = `{"${this.data.MAC}":{"display_left":"left","display_mid":"motifs","display_right":"right"}}`
     this.publish(Msg)
     this.setData({
       titleimg: "./img/双向.png",
@@ -229,7 +204,7 @@ Page({
 
   //静态上
   changeup() {
-    let Msg = `{"${this.data.MAC}":{"display_left":"up","display_right":"up"}}`
+    let Msg = `{"${this.data.MAC}":{"display_left":"up","display_mid":"up","display_right":"up"}}`
     this.publish(Msg)
     this.setData({
       titleimg: "./img/向上.png",
@@ -239,7 +214,7 @@ Page({
 
   //静态下
   changedown() {
-    let Msg = `{"${this.data.MAC}":{"display_left":"down","display_right":"down"}}`
+    let Msg = `{"${this.data.MAC}":{"display_left":"down","display_mid":"down","display_right":"down"}}`
     this.publish(Msg)
     this.setData({
       titleimg: "./img/向下.png",
@@ -247,9 +222,11 @@ Page({
     })
   },
 
+  // ===== 动态方向 =====
+
   //动态左
   changeLeft() {
-    let Msg = `{"${this.data.MAC}":{"display_left":"Left","display_right":"Left"}}`
+    let Msg = `{"${this.data.MAC}":{"display_left":"Left","display_mid":"Left","display_right":"Left"}}`
     this.publish(Msg)
     this.setData({
       titleimg: "./img/向左.png",
@@ -258,7 +235,7 @@ Page({
   },
   //动态右
   changeRight() {
-    let Msg = `{"${this.data.MAC}":{"display_left":"Right","display_right":"Right"}}`
+    let Msg = `{"${this.data.MAC}":{"display_left":"Right","display_mid":"Right","display_right":"Right"}}`
     this.publish(Msg)
     this.setData({
       titleimg: "./img/向右.png",
@@ -268,7 +245,7 @@ Page({
 
   //动态双向
   changeCenter() {
-    let Msg = `{"${this.data.MAC}":{"display_left":"Left","display_right":"Right"}}`
+    let Msg = `{"${this.data.MAC}":{"display_left":"Left","display_mid":"motifs","display_right":"Right"}}`
     this.publish(Msg)
     this.setData({
       titleimg: "./img/双向.png",
@@ -277,7 +254,7 @@ Page({
   },
   //动态向上
   changeUp() {
-    let Msg = `{"${this.data.MAC}":{"display_left":"Up","display_right":"Up"}}`
+    let Msg = `{"${this.data.MAC}":{"display_left":"Up","display_mid":"Up","display_right":"Up"}}`
     this.publish(Msg)
     this.setData({
       titleimg: "./img/向上.png",
@@ -286,10 +263,49 @@ Page({
   },
   //动态向下
   changeDown() {
-    let Msg = `{"${this.data.MAC}":{"display_left":"Down","display_right":"Down"}}`
+    let Msg = `{"${this.data.MAC}":{"display_left":"Down","display_mid":"Down","display_right":"Down"}}`
     this.publish(Msg)
     this.setData({
       titleimg: "./img/向下.png",
+      dTaicss: 'CPimage1'
+    })
+  },
+
+  // ===== 动态斜方向 =====
+
+  //动态左上
+  changeLUp() {
+    let Msg = `{"${this.data.MAC}":{"display_left":"LUp","display_mid":"LUp","display_right":"LUp"}}`
+    this.publish(Msg)
+    this.setData({
+      titleimg: "./img/动态左上-开.png",
+      dTaicss: 'CPimage1'
+    })
+  },
+  //动态右上
+  changeRUp() {
+    let Msg = `{"${this.data.MAC}":{"display_left":"RUp","display_mid":"RUp","display_right":"RUp"}}`
+    this.publish(Msg)
+    this.setData({
+      titleimg: "./img/动态右上-开.png",
+      dTaicss: 'CPimage1'
+    })
+  },
+  //动态左下
+  changeLDown() {
+    let Msg = `{"${this.data.MAC}":{"display_left":"LDown","display_mid":"LDown","display_right":"LDown"}}`
+    this.publish(Msg)
+    this.setData({
+      titleimg: "./img/动态左下-开.png",
+      dTaicss: 'CPimage1'
+    })
+  },
+  //动态右下
+  changeRDown() {
+    let Msg = `{"${this.data.MAC}":{"display_left":"RDown","display_mid":"RDown","display_right":"RDown"}}`
+    this.publish(Msg)
+    this.setData({
+      titleimg: "./img/动态右下-开.png",
       dTaicss: 'CPimage1'
     })
   },

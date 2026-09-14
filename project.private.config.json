@@ -21,17 +21,5 @@
     "useIsolateContext": true
   },
   "libVersion": "3.1.5",
-  "condition": {
-    "miniprogram": {
-      "list": [
-        {
-          "name": "pages/ELight/ELight",
-          "pathName": "pages/ELight/ELight",
-          "query": "",
-          "scene": null,
-          "launchMode": "default"
-        }
-      ]
-    }
-  }
+  "condition": {}
 }

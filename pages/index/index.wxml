@@ -1,89 +1,88 @@
 <!--index.wxml-->
-
 <view class="body">
-  <view class="tab_item">
-    <view style="padding:5px 5px;font-weight: 700;" bindtap="gotoPage">{{Group.GroupName}}</view>
-    <view style="padding:5px 5px;font-weight: 500;font-size: 12px;color: rgb(114, 114, 114);">环境实时监测中……</view>
-
-    <image class="" src="../ECLight/img/双向.png" mode="aspectFit" style="width: 100%;height: 200px;" bindtap="gotoPage"/>
-
-    <view class="tr" bindtap="gotoPage">
-          <view class="td" style="width: 9%;">
-            <image class="item-icon" src="./img/信号.png" mode="aspectFit" />
-          </view>
-          <view class="td1" style="width: 50%; justify-content: left;">Cat.1网络已连接…</view>
-          <view class="td" style="width: 10%;">
-            <image class="item-icon" src="./img/mesh.png" mode="aspectFit" />
-          </view>
-          <view class="td1" style="width: 50%; justify-content: left;">Mesh网关运行中…</view>
-        </view>
-
-    <view class="line"/>
-
-    <view class="item-data" bindtap="gotoPage">
-      <view class="table">
-
-        <!-- 表格第一行 -->
-        <view class="tr">
-          <view class="td" style="width: 5%;">
-            <view class="dian4"></view> 
-          </view>
-          <view class="td1" style="width: 20%;">温度</view>
-          <view class="td1"style="width: 25%;">26.7</view>
-
-          <view class="td" style="width: 5%;">
-            <view class="dian2"></view> 
-          </view>
-          <view class="td1" style="width: 20%;">湿度</view>
-          <view class="td1"style="width: 25%;">56</view>
-
-        </view>
-
-        <!-- 表格第二行 -->
-        <view class="tr">
-          <view class="td" style="width: 5%;">
-            <view class="dian3"></view> 
-          </view>
-          <view class="td1" style="width: 20%;">烟雾</view>
-          <view class="td1"style="width: 25%;">47</view>
-
-          <view class="td" style="width: 5%;">
-            <view class="dian3"></view> 
-          </view>
-          <view class="td1" style="width: 20%;">状态</view>
-          <view class="td1"style="width: 25%;">正常</view>
-
-        </view>
-
-
-      </view>
-    </view>
-    <view class="line" />
-
-    <view class="item-title h2" style="padding:5px,5px;font-weight: 700;">子设备</view>
-    <!-- 表格第一行 -->
-    <view class="tr" style="height: 160px;"  >
-      <view class="td tab_item" style="width: 50%;background-color: rgb(233, 240, 255);margin-right: 1%;border-radius: 6px;padding: 0,auto; margin-bottom: 0;" bindtap="gotoPage2">
-        <!-- <view class="tag"></view> -->
-        <!-- 角标 -->
-        <view style="text-align: left;">
-          <view style="color: rgb(67, 110, 210);font-weight: 800;">吸顶灯</view>
-          <view style="color: rgb(67, 110, 210);font-weight: 500;font-size: 12px;">环境空气质量监测中……</view>
-        </view>
-        <image class="item-img" mode="aspectFit" src="./img/CLight.png"></image>
-      </view>
-
-      <view class="td tab_item" style="width: 50%;background-color: rgb(255 , 237, 236);margin-left: 1%;border-radius: 6px;padding: 0,auto; margin-bottom: 0;" bindtap="gotoPage3">
-        <view class="tag"></view>
-        <view class="tag-txt">警告</view>
-        <view style="text-align: left;">
-          <view style="color: rgb(232, 117, 126);font-weight: 800;">指示牌</view>
-          <view style="color: rgb(232, 117, 126);font-weight: 500;font-size: 12px;">环境实时监测中……</view>
-        </view>
-        <image class="item-img" mode="aspectFit" src="../ELight/img/双向.png"></image>
-      </view>
+  <!-- 主设备卡片 -->
+  <view class="card hero-card" bindtap="gotoPage">
+    <view class="hero-header">
+      <text class="hero-title">{{Group.GroupName}}</text>
+      <text class="hero-subtitle">环境实时监测中……</text>
     </view>
 
+    <image class="hero-image" src="../ECLight/img/双向.png" mode="aspectFit" bindtap="gotoPage"/>
 
+    <view class="status-bar">
+      <view class="status-pill">
+        <image class="status-icon" src="./img/信号.png" mode="aspectFit"/>
+        <text>Cat.1网络已连接…</text>
+      </view>
+      <view class="status-pill">
+        <image class="status-icon" src="./img/mesh.png" mode="aspectFit"/>
+        <text>Mesh网关运行中…</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 实时环境数据 -->
+  <view class="card data-card">
+    <view class="section-title">实时环境数据</view>
+    <view class="metric-grid">
+      <view class="metric">
+        <view class="metric-dot {{now.TEMPERcolor || 'dian4'}}"></view>
+        <view class="metric-info">
+          <text class="metric-label">温度：</text>
+          <text class="metric-value">{{now.TEMPER || '--'}}°C</text>
+        </view>
+      </view>
+      <view class="metric">
+        <view class="metric-dot {{now.HUDcolor || 'dian2'}}"></view>
+        <view class="metric-info">
+          <text class="metric-label">湿度：</text>
+          <text class="metric-value">{{now.HUD || '--'}}</text>
+        </view>
+      </view>
+      <view class="metric">
+        <view class="metric-dot {{now.TVOCcolor || 'dian3'}}"></view>
+        <view class="metric-info">
+          <text class="metric-label">TVOC：</text>
+          <text class="metric-value">{{now.TVOC != null ? now.TVOC : '--'}}</text>
+        </view>
+      </view>
+      <view class="metric">
+        <view class="metric-dot {{now.STATUS === '报警中' ? 'dian5' : 'dian3'}}"></view>
+        <view class="metric-info">
+          <text class="metric-label">状态：</text>
+          <text class="metric-value {{now.STATUS === '报警中' ? 'status-alarm' : ''}}">{{now.STATUS || '正常'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 设备 -->
+  <view class="card">
+    <view class="section-title">设备</view>
+    <view class="device-row">
+      <view class="device-card light-card {{now.STATUS === '报警中' ? 'warning' : ''}}">
+        <view class="device-text">
+          <text class="device-name">指示灯</text>
+          <text class="device-desc">{{now.STATUS === '报警中' ? '报警中' : '正常运行'}}</text>
+        </view>
+        <image class="device-img" src="../ECLight/img/双向.png" mode="aspectFit"/>
+      </view>
+      <view class="device-card sign-card {{now.STATUS === '报警中' ? 'warning' : ''}}">
+        <view class="device-text">
+          <text class="device-name">吸顶灯</text>
+          <text class="device-desc">{{now.STATUS === '报警中' ? '报警中' : '正常运行'}}</text>
+        </view>
+        <image class="device-img" src="./img/CLight.png" mode="aspectFit"/>
+      </view>
+    </view>
+  </view>
+
+  <!-- 逃生模式入口 -->
+  <view class="escape-entry" bindtap="gotoEscape">
+    <view class="escape-entry-content">
+      <text class="escape-entry-icon">🔥</text>
+      <text class="escape-entry-text">点击进入逃生模式</text>
+    </view>
+    <text class="escape-entry-arrow">›</text>
   </view>
 </view>

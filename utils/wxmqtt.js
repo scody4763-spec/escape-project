@@ -103,17 +103,37 @@ function createMqttClient(options) {
 
     connect: function () {
       var self = this
+      // 构建备选URL列表：如果wss://失败，尝试ws://
+      var urls = [this.url]
+      if (this.url.indexOf('wss://') === 0) {
+        urls.push('ws://' + this.url.slice(6))
+      }
+      this._connectTry(urls, 0)
+    },
+
+    _connectTry: function (urls, index) {
+      if (index >= urls.length) {
+        console.error('wxmqtt 所有连接方式均失败')
+        this.onError({ errMsg: '所有连接方式均失败' })
+        return
+      }
+      var self = this
+      var url = urls[index]
+      console.log('wxmqtt 尝试连接 [' + (index + 1) + '/' + urls.length + ']: ' + url)
+
       this.socketTask = wx.connectSocket({
-        url: this.url,
+        url: url,
         protocols: ['mqtt'],
         enableCompression: false,
         success: function () {},
         fail: function (err) {
-          self.onError(err)
+          console.error('wxmqtt connectSocket fail [' + url + ']', err)
+          self._connectTry(urls, index + 1)
         }
       })
       this.socketTask.onOpen(function () {
-        console.log('wxmqtt socket open')
+        console.log('wxmqtt socket open [' + url + ']')
+        self.url = url
         self.send(buildConnect({
           clientId: self.clientId,
           username: self.username,
@@ -138,7 +158,10 @@ function createMqttClient(options) {
         self.onClose()
       })
       this.socketTask.onError(function (err) {
-        self.onError(err)
+        console.error('wxmqtt socket error [' + url + ']', err)
+        if (!self.connected) {
+          self._connectTry(urls, index + 1)
+        }
       })
     },
 

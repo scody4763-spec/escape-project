@@ -1,5 +1,4 @@
 const app = getApp()
-// 记得加上const
 const createMqttClient = require('../../utils/wxmqtt')
 
 function randomString(len) {
@@ -13,44 +12,19 @@ function randomString(len) {
   return pwd;
 }
 
-
 Page({
-  /**
-   * 页面的初始数据
-   */
   data: {
     client: null,
-    host: "api.gdustaiot.cn",
-    mqttHost: "mqtt.gdustaiot.cn",
     subTopic: "indicator_light/data",
     pubTopic: "indicator_light/command",
-    pubMsg: '{"ESP32_D8:BC:38:78:21:98":{"display_left":"Right","display_mid":"Right","display_right":"Right"}}',
-    receivedMsg: "",
-    mqttOptions: {
-      clientId: randomString(30),
-      username: "indicator_light",
-      password: "indicator_light",
-      reconnectPeriod: 1000, // 1000毫秒，设置为 0 禁用自动重连，两次重新连接之间的间隔时间
-      connectTimeout: 30 * 1000, // 30秒，连接超时时间
-      qos: 1
-    },
-    titleimg: "./img/双向.png",
-    // MAC:'ESP32_40:91:51:84:94:C0', //应急灯
-    // MAC: 'ESP32_58:BF:25:39:A6:DC',
-    MAC: 'ESP32_D8:BC:38:78:21:98',
-    // 空气质量等级：1=优 2=良 3=轻度污染 4=中度污染 5=重度污染
-    now: {
-      temper: '--',
-      adc: '--',
-      hud: '--',
-      AQI: '--',
-      TVOC: '--',
-      ECO2: '--',
-      HUD: '--',
-      probability: '--',
-      hotPixels: '--'
-    },
-    dTaicss: '',
+    MAC: 'ESP32_D8:BC:38:78:24:B8',
+    reconnectTimer: null,
+    connectAttempts: 0,
+    // HTTP 中继服务器配置（真机调试时使用）
+    relayHost: '192.168.31.211',
+    relayPort: 3000,
+    pollTimer: null,
+    firePollTimer: null,
     // 逃生模式
     escapeMode: false,
     manualEscape: false,
@@ -59,347 +33,152 @@ Page({
     exitName: '--',
     distance: '--',
     estimatedTime: '--',
-    latitude: 0,
-    longitude: 0,
-    currentLocation: '--'
+    // BLE 蓝牙定位
+    bleBeacons: [],
+    isScanning: false,
+    scanTimer: null,
+    scanTimeoutId: null,
+    currentLocation: '--',
+    // 火灾检测时间戳（用于10秒自动解除）
+    lastFireTime: 0
   },
 
-  setValue(key, value) {
-    this.setData({
-      [key]: value,
-    });
-  },
-
+  // ===== MQTT 连接 =====
   connect() {
     try {
       this.data.client = createMqttClient({
         url: 'wss://42.193.218.29:8084/mqtt',
-        username: 'indicator_light',
-        password: 'indicator_light',
+        username: 'xcx_eclight',
+        password: 'xcx_eclight',
         clientId: randomString(30),
         onConnect: () => {
-          wx.showToast({ title: '连接成功' });
-          console.log('连接成功');
+          console.log('ECLight 连接成功');
           this.data.client.subscribe(this.data.subTopic);
         },
-        onMessage: (topic, payload) => this.handleMessage(topic, payload),
-        onError: (error) => console.log('onError', error),
-        onClose: () => console.log('已断开连接')
+        onMessage: (topic, payload) => {
+          console.log("topic:" + topic);
+          console.log("payload:" + payload);
+          try {
+            let a = JSON.parse(payload);
+            if (a[this.data.MAC] && a[this.data.MAC].display) {
+              switch (a[this.data.MAC].display) {
+                case 'left': case 'Left':
+                  this.setValue('titleimg', "./img/向左.png"); break;
+                case 'right': case 'Right':
+                  this.setValue('titleimg', "./img/向右.png"); break;
+                case 'center': case 'Center':
+                  this.setValue('titleimg', "./img/双向.png"); break;
+                case 'up': case 'Up':
+                  this.setValue('titleimg', "./img/向上.png"); break;
+                case 'down': case 'Down':
+                  this.setValue('titleimg', "./img/向下.png"); break;
+              }
+            }
+            if (a['ESP32_40:91:51:84:94:C0']) {
+              this.setData({
+                now: {
+                  temper: a['ESP32_40:91:51:84:94:C0'].temp,
+                  adc: a['ESP32_40:91:51:84:94:C0'].adc,
+                  hud: a['ESP32_40:91:51:84:94:C0'].hum,
+                }
+              });
+            }
+          } catch (e) {
+            console.log('parse error', e);
+          }
+        },
+        onError: (error) => {
+          console.log('ECLight onError', error);
+        },
+        onClose: () => {
+          console.log('ECLight 已断开');
+        }
       });
       this.data.client.connect();
     } catch (error) {
-      console.log('mqtt.connect error', error);
+      console.log("mqtt.connect error", error);
     }
   },
 
-  connectCeiling() {
-    try {
-      this.ceilingClient = createMqttClient({
-        url: 'wss://42.193.218.29:8084/mqtt',
-        username: 'ceiling_light',
-        password: 'ceiling_light',
-        clientId: randomString(30),
-        onConnect: () => {
-          console.log('吸顶灯连接成功');
-          this.ceilingClient.subscribe('ceiling_light/data');
-        },
-        onMessage: (topic, payload) => this.handleCeilingMessage(topic, payload),
-        onError: (error) => console.log('ceiling onError', error),
-        onClose: () => console.log('吸顶灯已断开')
-      });
-      this.ceilingClient.connect();
-    } catch (error) {
-      console.log('ceiling mqtt.connect error', error);
+  scheduleReconnect() {
+    if (this.data.connectAttempts >= 5) return;
+    const delay = Math.min(3000 * Math.pow(2, this.data.connectAttempts - 1), 30000);
+    console.log('MQTT 将在 ' + delay + 'ms 后重连');
+    this.data.reconnectTimer = setTimeout(() => {
+      this.connect();
+    }, delay);
+  },
+
+  disconnect() {
+    if (this.data.client) {
+      this.data.client.end();
+      this.data.client = null;
     }
   },
 
+  // ===== MQTT 消息处理（火灾检测） =====
   handleMessage(topic, payload) {
-    const currMsg = this.data.receivedMsg ? `<br/>${payload}` : payload;
-    this.setValue("receivedMsg", this.data.receivedMsg.concat(currMsg));
     console.log("topic:" + topic);
     console.log("payload:" + payload);
 
-    let a = JSON.parse(payload);
-    let d = a[this.data.MAC] || {};
-    let dir = d.display_left || d.display_mid || d.display || '';
-    const dirMap = {
-      'left': './img/向左.png',
-      'Left': './img/向左.png',
-      'right': './img/向右.png',
-      'Right': './img/向右.png',
-      'center': './img/双向.png',
-      'Center': './img/双向.png',
-      'up': './img/向上.png',
-      'Up': './img/向上.png',
-      'down': './img/向下.png',
-      'Down': './img/向下.png',
-      'motifs': './img/双向.png',
-      'style': './img/双向.png'
-    };
-    if (dirMap[dir]) {
-      this.setValue('titleimg', dirMap[dir]);
-    }
-
-    this.setData({
-      now: {
-        ...this.data.now,
-        temper: d.temp != null ? d.temp : this.data.now.temper,
-        hud: d.hum != null ? d.hum : this.data.now.hud,
-        AQI: d.AQI != null ? d.AQI : this.data.now.AQI,
-        TVOC: d.TVOC != null ? d.TVOC : this.data.now.TVOC,
-        ECO2: d.ECO2 != null ? d.ECO2 : this.data.now.ECO2,
-        HUD: d.buzzer === 2 ? '报警中' : '正常'
-      }
-    });
-
-    if (d.buzzer === 2 || d.ESP32_fires_flag === true) {
-      this.manualEscape = false;
-      if (!this.data.escapeMode) {
-        this.setData({ escapeMode: true });
-        this.startLocation();
-        wx.vibrateLong();
-      }
-    } else {
-      if (this.data.escapeMode && !this.manualEscape) {
-        this.setData({ escapeMode: false });
-        if (wx.stopLocationUpdate) wx.stopLocationUpdate();
-      }
-    }
-  },
-
-  handleCeilingMessage(topic, payload) {
     try {
-      console.log("ceiling topic:" + topic);
-      console.log("ceiling payload:" + payload);
       let a = JSON.parse(payload);
-      let key = Object.keys(a)[0];
-      let d = a[key] || {};
-      this.setData({
-        now: {
-          ...this.data.now,
-          probability: this.formatProbability(d),
-          temper: d.temp != null ? d.temp : (d.temperature != null ? d.temperature : this.data.now.temper),
-          hud: d.hum != null ? d.hum : (d.humidity != null ? d.humidity : this.data.now.hud),
-          AQI: d.AQI != null ? d.AQI : (d.aqi != null ? d.aqi : this.data.now.AQI),
-          TVOC: d.TVOC != null ? d.TVOC : (d.tvoc != null ? d.tvoc : this.data.now.TVOC),
-          ECO2: d.ECO2 != null ? d.ECO2 : (d.eco2 != null ? d.eco2 : this.data.now.ECO2),
-          hotPixels: d.hot_spot_cnt != null ? d.hot_spot_cnt : (d.hotSpotCnt != null ? d.hotSpotCnt : (d.hot_spot_count != null ? d.hot_spot_count : (d.high_temp_pixels != null ? d.high_temp_pixels : this.data.now.hotPixels)))
+      let anyFire = false;
+
+      // 支持单设备(对象)和多设备Mesh(数组)两种格式
+      if (Array.isArray(a)) {
+        // Mesh 组网模式：遍历所有设备
+        for (let item of a) {
+          if (typeof item === 'object' && item !== null) {
+            let mac = Object.keys(item)[0];
+            let deviceData = item[mac] || {};
+            // 任意设备触发火灾，都标记为火灾（支持 buzzer、ESP32_fires_flag、flame 三种字段）
+            if (deviceData.buzzer === 2 || deviceData.ESP32_fires_flag === true || deviceData.flame === 'True') {
+              anyFire = true;
+            }
+          }
         }
-      });
+      } else {
+        // 单设备模式
+        let d = a[this.data.MAC] || {};
+        anyFire = d.buzzer === 2 || d.ESP32_fires_flag === true || d.flame === 'True';
+      }
+
+      if (anyFire) {
+        // 更新火灾检测时间戳
+        this.setData({ lastFireTime: Date.now() });
+        this.manualEscape = false;
+        if (!this.data.escapeMode) {
+          this.setData({ escapeMode: true });
+          this.startLocation();
+          wx.vibrateLong();
+          wx.vibrateLong();
+          wx.showModal({
+            title: '⚠️ 火灾警报',
+            content: '检测到火灾！正在启动逃生导航，请跟随指示前往安全出口',
+            showCancel: false,
+            confirmText: '我知道了'
+          });
+        }
+      } else {
+        // 10秒内没有新火灾信号才解除火灾模式
+        if (this.data.escapeMode && !this.manualEscape) {
+          if (Date.now() - this.data.lastFireTime > 10000) {
+            this.setData({ escapeMode: false });
+            if (this.data.scanTimer) {
+              clearTimeout(this.data.scanTimer);
+            }
+            wx.stopBluetoothDevicesDiscovery({});
+            wx.showToast({ title: '火警已解除', icon: 'none' });
+          }
+        }
+      }
     } catch (e) {
-      console.log("ceiling parse error", e);
+      console.log('parse error', e);
     }
-  },
-
-  formatProbability(d) {
-    let p = d.probability != null ? d.probability : (d.fire_probability != null ? d.fire_probability : d.fire_prob);
-    if (p != null) {
-      let num = Number(p);
-      if (!isNaN(num)) {
-        if (num <= 1) return Math.round(num * 100) + '%';
-        return Math.round(num) + '%';
-      }
-    }
-    if (d.ESP32_fires_flag === true) return '100%';
-    let tvoc = Number(d.TVOC != null ? d.TVOC : d.tvoc || 0);
-    let temp = Number(d.temp != null ? d.temp : d.temperature || 0);
-    if (tvoc > 200 || temp > 60) return '80%';
-    if (tvoc > 100 || temp > 40) return '50%';
-    return '10%';
-  },
-
-  //订阅
-  subscribe() {
-    if (this.data.client) {
-      this.data.client.subscribe(this.data.subTopic)
-      wx.showModal({
-        content: `成功订阅主题：${this.data.subTopic}`,
-        showCancel: false,
-      })
-      return
-    }
-    wx.showToast({
-      title: '请先点击连接',
-      icon: 'error',
-    })
-  },
-
-  //断开连接
-  disconnect() {
-    if (this.data.client) {
-      this.data.client.end()
-      this.data.client = null
-    }
-    if (this.ceilingClient) {
-      this.ceilingClient.end()
-      this.ceilingClient = null
-    }
-    console.log("已断开连接");
-  },
-
-//发布
-  publish(Msg) {
-    
-      if (this.data.client) {
-        // this.data.client.publish(this.data.pubTopic, this.data.pubMsg)
-        this.data.client.publish(this.data.pubTopic, Msg)
-        console.log("发布成功：" + Msg);
-        return
-      } else{
-        console.log("未连接");
-      }
-        
-    
-    // wx.showToast({
-    //   title: '请先点击连接',
-    //   icon: 'error',
-    // })
-  },
-
-  //静态左
-  changeleft() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"left","display_mid":"left","display_right":"left"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/向左.png",
-      dTaicss: ""
-    })
-  },
-
-  //静态右
-  changeright() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"right","display_mid":"right","display_right":"right"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/向右.png",
-      dTaicss: ""
-    })
-  },
-
-  //静态双向
-  changecenter() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"motifs","display_mid":"motifs","display_right":"motifs"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/双向.png",
-      dTaicss: ""
-    })
-  },
-
-  //静态上
-  changeup() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"up","display_mid":"up","display_right":"up"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/向上.png",
-      dTaicss: ""
-    })
-  },
-
-  //静态下
-  changedown() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"down","display_mid":"down","display_right":"down"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/向下.png",
-      dTaicss: ""
-    })
-  },
-
-  //动态左
-  changeLeft() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"Left","display_mid":"Left","display_right":"Left"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/向左.png",
-      dTaicss: 'CPimage1'
-    })
-  },
-  //动态右
-  changeRight() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"Right","display_mid":"Right","display_right":"Right"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/向右.png",
-      dTaicss: 'CPimage1'
-    })
-  },
-
-  //动态双向
-  changeCenter() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"motifs","display_mid":"motifs","display_right":"motifs"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/双向.png",
-      dTaicss: 'CPimage1'
-    })
-  },
-  //动态向上
-  changeUp() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"Up","display_mid":"Up","display_right":"Up"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/向上.png",
-      dTaicss: 'CPimage1'
-    })
-  },
-  //动态向下
-  changeDown() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"Down","display_mid":"Down","display_right":"Down"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/向下.png",
-      dTaicss: 'CPimage1'
-    })
-  },
-
-  //动态左上
-  changeLUp() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"LUp","display_mid":"LUp","display_right":"LUp"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/动态左上-开.png",
-      dTaicss: 'CPimage1'
-    })
-  },
-
-  //动态右上
-  changeRUp() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"RUp","display_mid":"RUp","display_right":"RUp"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/动态右上-开.png",
-      dTaicss: 'CPimage1'
-    })
-  },
-
-  //动态左下
-  changeLDown() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"LDown","display_mid":"LDown","display_right":"LDown"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/动态左下-开.png",
-      dTaicss: 'CPimage1'
-    })
-  },
-
-  //动态右下
-  changeRDown() {
-    let Msg = '{"' + this.data.MAC + '":{"display_left":"RDown","display_mid":"RDown","display_right":"RDown"}}'
-    this.publish(Msg)
-    this.setData({
-      titleimg: "./img/动态右下-开.png",
-      dTaicss: 'CPimage1'
-    })
-  },
-
-  sliderChange(e) {
-    let Msg = '{"' + this.data.MAC + '":{"brightness":"' + e.detail.value + '"}}'
-    this.publish(Msg)
   },
 
   // ===== 逃生导航功能 =====
-  // 开始逃生模式
   startEscape() {
     this.manualEscape = true;
     this.setData({ escapeMode: true });
@@ -407,56 +186,144 @@ Page({
     wx.vibrateLong();
   },
 
-  // 停止逃生模式
   stopEscape() {
     this.manualEscape = false;
     this.setData({ escapeMode: false });
-    if (wx.stopLocationUpdate) wx.stopLocationUpdate();
-  },
-
-  // 开始GPS定位
-  startLocation() {
-    wx.startLocationUpdate({
+    // 清除所有定时器
+    if (this.data.scanTimer) {
+      clearTimeout(this.data.scanTimer);
+    }
+    if (this.data.scanTimeoutId) {
+      clearTimeout(this.data.scanTimeoutId);
+    }
+    this.setData({ scanTimer: null, scanTimeoutId: null });
+    // 停止扫描并关闭蓝牙适配器
+    wx.stopBluetoothDevicesDiscovery({
       success: () => {
-        wx.onLocationChange((res) => {
-          this.setData({
-            latitude: res.latitude,
-            longitude: res.longitude,
-            currentLocation: res.latitude.toFixed(5) + ', ' + res.longitude.toFixed(5)
-          });
-          this.reportAndGetDirection(res.latitude, res.longitude);
+        console.log('已停止蓝牙扫描');
+        wx.closeBluetoothAdapter({
+          success: () => console.log('已关闭蓝牙适配器'),
+          fail: (err) => console.log('关闭蓝牙适配器失败', err)
         });
       },
-      fail: () => {
-        wx.getLocation({
-          type: 'gcj02',
-          success: (res) => {
-            this.setData({
-              latitude: res.latitude,
-              longitude: res.longitude,
-              currentLocation: res.latitude.toFixed(5) + ', ' + res.longitude.toFixed(5)
-            });
-            this.reportAndGetDirection(res.latitude, res.longitude);
-          },
-          fail: () => {
-            // 模拟定位：默认使用 6F 大厅节点
-            this.setData({ currentLocation: '0.00000, 22.50000' });
-            this.reportAndGetDirection(0, 22.5);
-          }
-        });
+      fail: (err) => {
+        console.log('停止蓝牙扫描失败', err);
+        wx.closeBluetoothAdapter({});
       }
     });
   },
 
-  // 上报位置并获取逃生方向
-  reportAndGetDirection(lat, lng) {
+  // ===== BLE 蓝牙定位 =====
+  startLocation() {
+    this.startBLEScan();
+  },
+
+  startBLEScan() {
+    const that = this;
+
+    // 先关闭旧的蓝牙适配器，确保可以重新打开
+    wx.closeBluetoothAdapter({
+      success: () => console.log('已关闭旧蓝牙适配器'),
+      fail: () => {},
+      complete: () => {
+        setTimeout(() => {
+          wx.openBluetoothAdapter({
+            success: () => {
+              console.log('蓝牙已开启');
+              that.setData({ bleBeacons: [], isScanning: true });
+              wx.startBluetoothDevicesDiscovery({
+                allowDuplicatesKey: false,
+                interval: 5000,
+                success: () => {
+                  console.log('开始扫描 BLE 设备');
+                  wx.onBluetoothDeviceFound(that.onDeviceFound);
+                },
+                fail: (err) => {
+                  console.error('启动扫描失败', err);
+                  that.setData({ isScanning: false });
+                  that.reportAndGetDirection([{ major: 3, minor: 1, rssi: -60 }]);
+                }
+              });
+            },
+            fail: (err) => {
+              console.error('开启蓝牙失败', err);
+              that.setData({ isScanning: false });
+              // 首次提示，之后不再提示
+              if (!wx.getStorageSync('bluetooth_prompted')) {
+                wx.showModal({
+                  title: '提示',
+                  content: '逃生导航需要使用蓝牙功能，请在手机设置中开启蓝牙，并允许微信使用蓝牙权限',
+                  showCancel: false,
+                  success: () => {
+                    wx.setStorageSync('bluetooth_prompted', true);
+                  }
+                });
+              }
+              that.reportAndGetDirection([{ major: 3, minor: 1, rssi: -60 }]);
+            }
+          });
+        }, 300);
+      }
+    });
+  },
+
+  onDeviceFound(res) {
+    const devices = res.devices;
+    for (const device of devices) {
+      if (!device.advertisData) continue;
+      const beacon = this.parseiBeacon(device.advertisData, device.RSSI);
+      if (!beacon) continue;
+
+      const existing = this.data.bleBeacons.findIndex(b => b.deviceId === device.deviceId);
+      const beaconData = {
+        deviceId: device.deviceId,
+        major: beacon.major,
+        minor: beacon.minor,
+        rssi: beacon.rssi,
+        timestamp: Date.now()
+      };
+      if (existing >= 0) {
+        const list = [...this.data.bleBeacons];
+        list[existing] = beaconData;
+        this.setData({ bleBeacons: list });
+      } else {
+        this.setData({ bleBeacons: [...this.data.bleBeacons, beaconData] });
+      }
+    }
+
+    if (this.data.scanTimer) clearTimeout(this.data.scanTimer);
+    const timer = setTimeout(() => {
+      const now = Date.now();
+      const validBeacons = this.data.bleBeacons
+        .filter(b => now - b.timestamp < 10000)
+        .map(b => ({ major: b.major, minor: b.minor, rssi: b.rssi }));
+      if (validBeacons.length > 0) {
+        this.reportAndGetDirection(validBeacons);
+      }
+    }, 1500);
+    this.setData({ scanTimer: timer });
+  },
+
+  parseiBeacon(advertisData, rssi) {
+    const data = new Uint8Array(advertisData);
+    for (let i = 0; i < data.length - 24; i++) {
+      if (data[i] === 0x4C && data[i + 1] === 0x00 &&
+          data[i + 2] === 0x02 && data[i + 3] === 0x15) {
+        const major = (data[i + 20] << 8) | data[i + 21];
+        const minor = (data[i + 22] << 8) | data[i + 23];
+        return { major, minor, rssi };
+      }
+    }
+    return null;
+  },
+
+  reportAndGetDirection(beacons) {
     wx.request({
       url: `http://42.193.218.29:8080/api/location`,
       method: 'POST',
       data: {
         openid: app.globalData.openid || 'test_openid_001',
-        latitude: lat,
-        longitude: lng
+        beacons: beacons
       },
       success: (res) => {
         const body = res.data || {};
@@ -481,7 +348,6 @@ Page({
             estimatedTime: data.estimated_time != null ? data.estimated_time : '--',
             currentLocation: (data.floor != null ? data.floor + 'F · ' : '') + (data.node_id || '未知位置')
           });
-          // 自动下发方向到指示灯
           if (data.direction) this.publishEscapeDirection(data.direction);
         } else {
           this.setData({ currentLocation: body.message || '定位失败' });
@@ -494,20 +360,23 @@ Page({
     });
   },
 
-  // 下发逃生方向到指示灯
   publishEscapeDirection(dir) {
     let Msg = '{"' + this.data.MAC + '":{"display_left":"' + dir + '","display_mid":"' + dir + '","display_right":"' + dir + '","buzzer":2}}';
     this.publish(Msg);
   },
 
-  // 拨打119
+  publish(msg) {
+    if (this.data.client) {
+      this.data.client.publish(this.data.pubTopic, msg);
+    }
+  },
+
   call119() {
     wx.makePhoneCall({
       phoneNumber: '119'
     });
   },
 
-  // 语音指引
   playVoiceGuide() {
     wx.showToast({
       title: '请跟随箭头方向逃生',
@@ -515,58 +384,111 @@ Page({
     });
   },
 
+  // ===== 生命周期 =====
+  onReady: function () {
+    this.connect();
+  },
+
+  onShow: function () {
+    // 检查是否从首页跳转过来时携带火灾标志
+    // 如果需要自动跳转，由首页的 handleMessage 处理
+  },
+
+  onHide: function () {
+    // 页面隐藏时不断开，保持后台接收
+  },
 
   onLoad: function (options) {
+    // 如果从首页跳转过来携带 fire=true，自动进入逃生模式
+    if (options && options.fire === 'true') {
+      console.log('收到火灾指令，自动进入逃生模式');
+      this.manualEscape = false;
+      this.setData({ escapeMode: true, lastFireTime: Date.now() });
+      this.startLocation();
+    }
+    // 如果配置了中继服务器，启动 HTTP 轮询
+    if (this.data.relayHost) {
+      this.startHttpPolling();
+    }
+},
 
+  // ===== HTTP 中继轮询（用于接收火灾消息） =====
+  startHttpPolling() {
+    if (!this.data.relayHost) return;
+    const relayUrl = `http://${this.data.relayHost}:${this.data.relayPort}/api/data`;
+    const fireUrl = `http://${this.data.relayHost}:${this.data.relayPort}/api/fire-alert`;
+    console.log('ELight 开始 HTTP 轮询');
+
+    // 轮询 MQTT 数据（用于环境数据更新）
+    const pollData = () => {
+      wx.request({
+        url: relayUrl,
+        method: 'GET',
+        success: (res) => {
+          if (res.data && res.data.data) {
+            const data = res.data.data;
+            Object.keys(data).forEach(topic => {
+              if (topic === this.data.subTopic) {
+                this.handleMessage(topic, data[topic].payload);
+              }
+            });
+          }
+        },
+        fail: (err) => {
+          console.log('ELight HTTP 轮询失败', err);
+        },
+        complete: () => {
+          this.data.pollTimer = setTimeout(pollData, 3000);
+        }
+      });
+    };
+
+    // 轮询火灾警报状态
+    const pollFire = () => {
+      wx.request({
+        url: fireUrl,
+        method: 'GET',
+        success: (res) => {
+          if (res.data && res.data.fireAlert) {
+            const alert = res.data.fireAlert;
+            console.log('ELight 收到火灾警报:', alert);
+            // 模拟 MQTT 消息调用 handleMessage
+            const mockPayload = JSON.stringify({
+              [this.data.MAC]: {
+                buzzer: alert.buzzer || 2,
+                ESP32_fires_flag: alert.fire || false,
+                temp: alert.temp || 28.5,
+                hum: alert.hum || 45,
+                TVOC: alert.TVOC || 0.8
+              }
+            });
+            this.handleMessage(this.data.subTopic, mockPayload);
+          }
+        },
+        fail: (err) => {
+          console.log('ELight 火灾警报轮询失败', err);
+        },
+        complete: () => {
+          this.data.firePollTimer = setTimeout(pollFire, 2000);
+        }
+      });
+    };
+
+    // 启动轮询
+    this.data.pollTimer = setTimeout(pollData, 100);
+    this.data.firePollTimer = setTimeout(pollFire, 500);
   },
 
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady: function () {
-    this.connect()
-    this.connectCeiling()
-  },
-
-  /**
-   * 生命周期函数--监听页面显示
-   */
-  onShow: function () {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide: function () {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload: function () {
-    this.disconnect()
-  },
-
-  /**
-   * 页面相关事件处理函数--监听用户下拉动作
-   */
-  onPullDownRefresh: function () {
-
-  },
-
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom: function () {
-
-  },
-
-  /**
-   * 用户点击右上角分享
-   */
-  onShareAppMessage: function () {
-
-  },
+  stopHttpPolling() {
+    if (this.data.pollTimer) {
+      clearTimeout(this.data.pollTimer);
+      this.data.pollTimer = null;
+    }
+    if (this.data.firePollTimer) {
+      clearTimeout(this.data.firePollTimer);
+      this.data.firePollTimer = null;
+    }
+  }
 })
+
+

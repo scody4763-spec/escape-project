@@ -1,0 +1,52 @@
+<!--pages/about/about.wxml-->
+
+<!-- 头部区域 -->
+<view class="header">
+  <view class="header-logo">
+    <image src="/pages/img/menber.png" mode="aspectFit"></image>
+  </view>
+  <view class="header-title">{{appInfo.name}}</view>
+  <view class="header-version">{{appInfo.version}}</view>
+  <view class="header-desc">{{appInfo.description}}</view>
+</view>
+
+<!-- 简介 -->
+<view class="card">
+  <view class="card-title">系统简介</view>
+  <text class="card-text">
+    云优径智慧逃生系统是一套基于 BLE 蓝牙定位技术的智能消防逃生解决方案。
+    系统通过部署在建筑物内的蓝牙信标网络，结合 ESP32 物联网设备，
+    实现对人员位置的实时定位，并在火灾等紧急情况下自动规划最优逃生路线，
+    引导人员快速、安全地撤离危险区域。
+  </text>
+</view>
+
+<!-- 核心功能 -->
+<view class="card">
+  <view class="card-title">核心功能</view>
+  <view class="feature-list">
+    <view class="feature-item" wx:for="{{features}}" wx:key="title">
+      <image class="feature-icon" src="{{item.icon}}" mode="aspectFit"></image>
+      <view class="feature-title">{{item.title}}</view>
+      <view class="feature-desc">{{item.desc}}</view>
+    </view>
+  </view>
+</view>
+
+<!-- 技术参数 -->
+<view class="card">
+  <view class="card-title">技术参数</view>
+  <view class="tech-list">
+    <view class="tech-item" wx:for="{{techStack}}" wx:key="label">
+      <text class="tech-label">{{item.label}}</text>
+      <text class="tech-value">{{item.value}}</text>
+    </view>
+  </view>
+</view>
+
+<!-- 底部 -->
+<view class="footer">
+  <text class="footer-text">云优径智慧逃生系统</text>
+  <text class="footer-text">Copyright © 2026</text>
+  <text class="footer-text">All Rights Reserved</text>
+</view>
