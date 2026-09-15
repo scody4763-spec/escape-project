@@ -1,0 +1,14 @@
+idf_component_register(
+    SRCS
+        "src/i2s_lcd_dma.c"
+        "src/eiceg_bitmaps.c"
+        "src/led_matrix_gfx.c"
+    INCLUDE_DIRS
+        "include"
+    REQUIRES
+        driver
+        esp_timer
+        freertos
+        esp_rom
+        hal
+)

@@ -1,0 +1,251 @@
+/* pages/Capital/Capital.wxss */
+.body {
+  padding: 10px 3%;
+  height: 100vh;
+  background-color: #eee;
+}
+
+.line {
+  width: 100%;
+  /* （线的宽度） */
+  height: 2rpx;
+  /* （线的高度，就是线粗度） */
+  background: #aaa;
+  /* （线的颜色） */
+  margin: 10px 0px;
+}
+
+
+.table {
+  display: flex;
+  flex-direction: column;
+  /* 排列形式: 向下 */
+
+}
+
+.tr {
+  display: flex;
+  flex-direction: row;
+  height: 40px;
+}
+
+.th,
+.td {
+  /* 公有的属性 */
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* 自动换行 */
+  width: 30%;
+  /* 4个25%相加刚好100% */
+  text-align: center;
+  /* 文本居中 */
+  justify-content: center;
+  /* 主轴居中 */
+  align-items: center;
+  /* 交叉轴居中 */
+}
+
+.td1 {
+  /* 公有的属性 */
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* 自动换行 */
+  width: 20%;
+  /* 4个25%相加刚好100% */
+  text-align: center;
+  /* text-align: left; */
+  /* 文本居中 */
+  justify-content: center;
+  /* 主轴居中 */
+  align-items: center;
+  /* 交叉轴居中 */
+
+}
+
+.td-75 {
+  flex-wrap: wrap;
+  /* 自动换行 */
+  width: 75%;
+}
+
+.th {
+  font-weight: 800;
+}
+
+.h2 {
+  padding-bottom: 10px;
+  color: rgb(80, 73, 73);
+  font-weight: 700;
+}
+
+.t1 {
+  padding-top: 10px;
+}
+
+
+.tab_item {
+
+  display: block;
+  background: #fff;
+  position: relative;
+  padding: 10px 7px;
+  border-radius: 15px;
+  margin: 15px 0;
+}
+
+.item-icon {
+  height: 20px;
+  display: block;
+  width: 20px;
+}
+
+.item-title {
+  padding: 6px 5px 0px;
+  font-weight: 500;
+}
+
+.echartsbox {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.echarts {
+  width: 100%;
+  height: 350rpx;
+}
+
+.ec-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+
+.BJmain {
+  display: flex;
+  justify-content: center;
+}
+
+.mainbj {
+  margin-top: 20px;
+  background-color: #ffffff;
+  width: 90%;
+  border-radius: 30rpx;
+}
+
+.CPtext {
+  font-size: 40rpx;
+  margin-top: 30rpx;
+  margin-left: 30rpx;
+}
+
+.textandima {
+  display: flex;
+  flex-direction: column;
+}
+
+.CPimage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20rpx;
+}
+
+.CPimage1 {
+  width: 200px; height: 150px; background-color:#92e0a3; 
+  position: absolute;  
+  animation-name: puff-out-horizontal;
+  animation-duration: 1.2s;
+  animation-timing-function: ease-out;
+  animation-delay: 0s;
+  animation-iteration-count: infinite;
+  animation-direction: normal;
+  animation-fill-mode: none;
+}
+
+.MAINBTNone {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10rpx;
+
+
+}
+
+.btnimageone {
+  width: 130rpx;
+  height: 70rpx;
+}
+
+.changone {
+  background-color: #eee;
+  border-radius: 15rpx;
+  margin-inline: 7rpx;
+}
+
+.onebtn {
+  width: 200rpx;
+  height: 100rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.MAINBTNtow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10rpx;
+}
+
+.changtow {
+  background-color: #eee;
+  border-radius: 15rpx;
+  margin-inline: 7rpx;
+}
+
+.btnimagetow {
+  width: 100rpx;
+  height: 100rpx;
+}
+
+.texttow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 35rpx;
+  font-weight: bold;
+  margin-top: 25rpx;
+}
+
+.towbtn {
+  width: 305rpx;
+  height: 100rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mainJDT {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 35rpx;
+  font-weight: bold;
+  margin-top: 50rpx;
+  flex-direction: column;
+}
+
+.JDT {
+  width: 100%;
+  height: 100rpx;
+}
+
+wx-slider .wx-slider-handle-wrapper {
+  height: 25rpx;
+}
+
+@import 'ECLight-wxa-auto-dark.wxss'
