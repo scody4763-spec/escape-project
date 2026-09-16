@@ -1,0 +1,175 @@
+{
+  "version": 1,
+  "ohos-module-entry": {
+    "SELECT_TARGET": "default",
+    "MODULE_BUILD_DIR": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\build",
+    "TARGETS": {
+      "default": {
+        "SOURCE_ROOT": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\src\\main",
+        "RESOURCES_PATH": [
+          "G:\\github\\escape-system-20\\EscapeGuide\\entry\\src\\main\\resources"
+        ],
+        "BUILD_PATH": {
+          "OUTPUT_PATH": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\build\\default\\outputs\\default",
+          "INTERMEDIA_PATH": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\build\\default\\intermediates",
+          "JS_ASSETS_PATH": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\build\\default\\intermediates\\loader_out\\default",
+          "JS_LITE_ASSETS_PATH": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\build\\default\\intermediates\\loader_out_lite\\default",
+          "RES_PATH": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\build\\default\\intermediates\\res\\default",
+          "RES_PROFILE_PATH": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\build\\default\\intermediates\\res\\default\\resources\\base\\profile",
+          "ETS_SUPER_VISUAL_PATH": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\build\\default\\cache\\default\\default@CompileArkTS\\esmodule",
+          "JS_SUPER_VISUAL_PATH": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\build\\default\\cache\\default\\default@CompileJS\\jsbundle",
+          "WORKER_LOADER": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\build\\default\\intermediates\\loader\\default\\loader.json",
+          "MANIFEST_JSON": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\build\\default\\intermediates\\manifest\\default",
+          "OUTPUT_METADATA_JSON": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\build\\default\\intermediates\\hap_metadata\\default\\output_metadata.json",
+          "SOURCE_MAP_DIR": "G:\\github\\escape-system-20\\EscapeGuide\\entry\\build\\default\\intermediates\\source_map\\default"
+        },
+        "BUILD_OPTION": {
+          "debuggable": true
+        }
+      }
+    },
+    "BUILD_OPTION": {
+      "default-default": {
+        "debuggable": true,
+        "copyFrom": "default",
+        "strictMode": {
+          "caseSensitiveCheck": true,
+          "useNormalizedOHMUrl": true
+        },
+        "resOptions": {
+          "copyCodeResource": {
+            "enable": false
+          }
+        },
+        "name": "debug"
+      }
+    },
+    "BUILD_PROFILE_OPT": {
+      "apiType": "stageMode",
+      "buildOption": {
+        "resOptions": {
+          "copyCodeResource": {
+            "enable": false
+          }
+        }
+      },
+      "buildOptionSet": [
+        {
+          "name": "release",
+          "arkOptions": {
+            "obfuscation": {
+              "ruleOptions": {
+                "enable": false,
+                "files": [
+                  "./obfuscation-rules.txt"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "name": "default"
+        },
+        {
+          "name": "debug"
+        }
+      ],
+      "targets": [
+        {
+          "name": "default"
+        }
+      ]
+    },
+    "BUILD_CACHE_DIR": ""
+  },
+  "ohos-project": {
+    "SELECT_PRODUCT_NAME": "default",
+    "MODULE_BUILD_DIR": "G:\\github\\escape-system-20\\EscapeGuide\\build",
+    "BUNDLE_NAME": "com.escape.guide",
+    "VERSION_CODE": 1000001,
+    "VERSION_NAME": "1.0.1",
+    "BUILD_PATH": {
+      "OUTPUT_PATH": "G:\\github\\escape-system-20\\EscapeGuide\\build\\outputs\\default"
+    },
+    "MODULES": [
+      {
+        "name": "entry",
+        "srcPath": "G:\\github\\escape-system-20\\EscapeGuide\\entry",
+        "targets": [
+          {
+            "name": "default",
+            "applyToProducts": [
+              "default"
+            ]
+          }
+        ],
+        "belongProjectPath": "G:\\github\\escape-system-20\\EscapeGuide"
+      }
+    ],
+    "PROFILE_OPT": {
+      "app": {
+        "signingConfigs": [
+          {
+            "name": "default",
+            "type": "HarmonyOS",
+            "material": {
+              "certpath": "C:\\Users\\Administrator\\.ohos\\config\\default_EscapeGuide_Uxb0vnaa1RZAYUmMUxz-pVlpJvqkrMI43vteDbcp2mw=.cer",
+              "keyAlias": "debugKey",
+              "keyPassword": "0000001BD14111AB942726A29C9648875CDB17ABD0C1EF7A290E1A0692EE84CC66FBFBB9B0E7EF7E67AD31",
+              "profile": "C:\\Users\\Administrator\\.ohos\\config\\default_EscapeGuide_Uxb0vnaa1RZAYUmMUxz-pVlpJvqkrMI43vteDbcp2mw=.p7b",
+              "signAlg": "SHA256withECDSA",
+              "storeFile": "C:\\Users\\Administrator\\.ohos\\config\\default_EscapeGuide_Uxb0vnaa1RZAYUmMUxz-pVlpJvqkrMI43vteDbcp2mw=.p12",
+              "storePassword": "0000001B813061BC49C9F78EEA8404E486E6ED89A0796456398FBAC63C7AFF205D904C52168DADA187BBFA"
+            }
+          }
+        ],
+        "products": [
+          {
+            "name": "default",
+            "signingConfig": "default",
+            "targetSdkVersion": "26.0.0",
+            "compatibleSdkVersion": "5.1.1(19)",
+            "runtimeOS": "HarmonyOS",
+            "buildOption": {
+              "strictMode": {
+                "caseSensitiveCheck": true,
+                "useNormalizedOHMUrl": true
+              }
+            }
+          }
+        ],
+        "buildModeSet": [
+          {
+            "name": "debug"
+          },
+          {
+            "name": "release"
+          }
+        ]
+      },
+      "modules": [
+        {
+          "name": "entry",
+          "srcPath": "./entry",
+          "targets": [
+            {
+              "name": "default",
+              "applyToProducts": [
+                "default"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "CONFIG_PROPERTIES": {
+      "enableSignTask": true,
+      "skipNativeIncremental": false,
+      "hvigor.keepDependency": true
+    },
+    "OVERALL_PROJECT_PATHS": [
+      "G:\\github\\escape-system-20\\EscapeGuide"
+    ],
+    "BUILD_CACHE_DIR": ""
+  }
+}

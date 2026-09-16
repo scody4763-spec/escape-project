@@ -1,0 +1,3 @@
+{
+  "src": ["pages/Splash", "pages/Home", "pages/Navigation", "pages/Settings", "pages/VideoPlayer", "pages/ArticleDetail"]
+}

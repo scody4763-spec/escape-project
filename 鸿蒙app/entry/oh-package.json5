@@ -1,0 +1,8 @@
+{
+  "modelVersion": "26.0.0",
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "应用主模块",
+  "dependencies": {},
+  "devDependencies": {}
+}
