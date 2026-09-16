@@ -1,0 +1,2 @@
+# Keep escape guide classes
+-keep-class-name

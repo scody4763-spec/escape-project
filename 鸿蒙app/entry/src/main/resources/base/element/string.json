@@ -1,0 +1,164 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "鸿蒙逃生导航"
+    },
+    {
+      "name": "module_desc",
+      "value": "逃生导航模块"
+    },
+    {
+      "name": "entry_desc",
+      "value": "智能建筑消防逃生导航应用"
+    },
+    {
+      "name": "entryability_desc",
+      "value": "Main Ability"
+    },
+    {
+      "name": "perm_internet_reason",
+      "value": "用于连接云端服务器获取逃生信息和定位计算"
+    },
+    {
+      "name": "perm_bluetooth_reason",
+      "value": "用于扫描室内蓝牙信标进行定位"
+    },
+    {
+      "name": "perm_ble_scan_reason",
+      "value": "用于扫描室内蓝牙信标进行定位"
+    },
+    {
+      "name": "perm_bluetooth_discover_reason",
+      "value": "用于发现附近的蓝牙信标设备"
+    },
+    {
+      "name": "perm_call_reason",
+      "value": "用于一键拨打119火警电话"
+    },
+    {
+      "name": "perm_vibrate_reason",
+      "value": "用于逃生时震动提醒"
+    },
+    {
+      "name": "perm_notification_reason",
+      "value": "用于发送逃生通知提醒"
+    },
+    {
+      "name": "perm_keep_bg_reason",
+      "value": "用于保持后台运行以持续接收逃生指引"
+    },
+    {
+      "name": "splash_title",
+      "value": "鸿蒙逃生导航"
+    },
+    {
+      "name": "splash_subtitle",
+      "value": "智能建筑消防逃生指引系统"
+    },
+    {
+      "name": "splash_init",
+      "value": "正在初始化..."
+    },
+    {
+      "name": "splash_ble_scanning",
+      "value": "正在连接蓝牙..."
+    },
+    {
+      "name": "splash_mqtt_connecting",
+      "value": "正在连接服务器..."
+    },
+    {
+      "name": "splash_ready",
+      "value": "准备就绪"
+    },
+    {
+      "name": "splash_permission_note",
+      "value": "本应用需要蓝牙定位权限以提供室内逃生导航服务"
+    },
+    {
+      "name": "home_title",
+      "value": "逃生知识"
+    },
+    {
+      "name": "nav_title",
+      "value": "逃生导航"
+    },
+    {
+      "name": "nav_locating",
+      "value": "蓝牙定位中…"
+    },
+    {
+      "name": "nav_located",
+      "value": "已定位"
+    },
+    {
+      "name": "nav_no_beacon",
+      "value": "未扫描到信标，请靠近最近应急灯"
+    },
+    {
+      "name": "nav_call_119",
+      "value": "呼叫119"
+    },
+    {
+      "name": "nav_relocate",
+      "value": "重新定位"
+    },
+    {
+      "name": "nav_voice_on",
+      "value": "关闭语音"
+    },
+    {
+      "name": "nav_voice_off",
+      "value": "开启语音"
+    },
+    {
+      "name": "nav_exit",
+      "value": "出口"
+    },
+    {
+      "name": "nav_distance",
+      "value": "距离"
+    },
+    {
+      "name": "nav_time",
+      "value": "预计时间"
+    },
+    {
+      "name": "nav_fire_alarm",
+      "value": "🔥 火警！请立即逃生"
+    },
+    {
+      "name": "nav_alarm_cleared",
+      "value": "火警已解除"
+    },
+    {
+      "name": "settings_title",
+      "value": "设置"
+    },
+    {
+      "name": "settings_day_mode",
+      "value": "日间模式"
+    },
+    {
+      "name": "settings_night_mode",
+      "value": "夜间模式"
+    },
+    {
+      "name": "settings_language",
+      "value": "语言"
+    },
+    {
+      "name": "settings_about",
+      "value": "关于"
+    },
+    {
+      "name": "settings_version",
+      "value": "版本"
+    },
+    {
+      "name": "about_text",
+      "value": "鸿蒙逃生导航 v1.0.1\n基于智能建筑消防逃生 AIoT 系统\n提供室内蓝牙定位逃生指引"
+    }
+  ]
+}

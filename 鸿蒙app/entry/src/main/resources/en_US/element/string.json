@@ -1,0 +1,164 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "Escape Guide"
+    },
+    {
+      "name": "module_desc",
+      "value": "Escape Navigation Module"
+    },
+    {
+      "name": "entry_desc",
+      "value": "Smart Building Fire Escape Navigation App"
+    },
+    {
+      "name": "entryability_desc",
+      "value": "Main Ability"
+    },
+    {
+      "name": "perm_internet_reason",
+      "value": "Used to connect to cloud server for escape info and location"
+    },
+    {
+      "name": "perm_bluetooth_reason",
+      "value": "Used to scan indoor BLE beacons for positioning"
+    },
+    {
+      "name": "perm_ble_scan_reason",
+      "value": "Used to scan indoor BLE beacons for positioning"
+    },
+    {
+      "name": "perm_bluetooth_discover_reason",
+      "value": "Used to discover nearby BLE beacon devices"
+    },
+    {
+      "name": "perm_call_reason",
+      "value": "Used to call 119 fire emergency"
+    },
+    {
+      "name": "perm_vibrate_reason",
+      "value": "Used for vibration alert during evacuation"
+    },
+    {
+      "name": "perm_notification_reason",
+      "value": "Used to send escape notification alerts"
+    },
+    {
+      "name": "perm_keep_bg_reason",
+      "value": "Used to keep running in background for escape guidance"
+    },
+    {
+      "name": "splash_title",
+      "value": "Escape Guide"
+    },
+    {
+      "name": "splash_subtitle",
+      "value": "Smart Building Fire Escape Guidance System"
+    },
+    {
+      "name": "splash_init",
+      "value": "Initializing..."
+    },
+    {
+      "name": "splash_ble_scanning",
+      "value": "Connecting Bluetooth..."
+    },
+    {
+      "name": "splash_mqtt_connecting",
+      "value": "Connecting to server..."
+    },
+    {
+      "name": "splash_ready",
+      "value": "Ready"
+    },
+    {
+      "name": "splash_permission_note",
+      "value": "This app needs BLE location permissions for indoor escape navigation"
+    },
+    {
+      "name": "home_title",
+      "value": "Escape Knowledge"
+    },
+    {
+      "name": "nav_title",
+      "value": "Escape Navigation"
+    },
+    {
+      "name": "nav_locating",
+      "value": "Locating via BLE..."
+    },
+    {
+      "name": "nav_located",
+      "value": "Located"
+    },
+    {
+      "name": "nav_no_beacon",
+      "value": "No beacon found, please approach nearest emergency light"
+    },
+    {
+      "name": "nav_call_119",
+      "value": "Call 119"
+    },
+    {
+      "name": "nav_relocate",
+      "value": "Relocate"
+    },
+    {
+      "name": "nav_voice_on",
+      "value": "Mute Voice"
+    },
+    {
+      "name": "nav_voice_off",
+      "value": "Enable Voice"
+    },
+    {
+      "name": "nav_exit",
+      "value": "Exit"
+    },
+    {
+      "name": "nav_distance",
+      "value": "Distance"
+    },
+    {
+      "name": "nav_time",
+      "value": "Est. Time"
+    },
+    {
+      "name": "nav_fire_alarm",
+      "value": "🔥 FIRE! Evacuate Now"
+    },
+    {
+      "name": "nav_alarm_cleared",
+      "value": "All Clear"
+    },
+    {
+      "name": "settings_title",
+      "value": "Settings"
+    },
+    {
+      "name": "settings_day_mode",
+      "value": "Day Mode"
+    },
+    {
+      "name": "settings_night_mode",
+      "value": "Night Mode"
+    },
+    {
+      "name": "settings_language",
+      "value": "Language"
+    },
+    {
+      "name": "settings_about",
+      "value": "About"
+    },
+    {
+      "name": "settings_version",
+      "value": "Version"
+    },
+    {
+      "name": "about_text",
+      "value": "Escape Guide v1.0.1\nBased on Smart Building Fire Escape AIoT System\nIndoor BLE Positioning Escape Guidance"
+    }
+  ]
+}
