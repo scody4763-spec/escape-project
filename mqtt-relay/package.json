@@ -1,9 +1,0 @@
-{
-  "name": "mqtt-relay",
-  "version": "1.0.0",
-  "description": "MQTT WebSocket 中继服务器 - 将 MQTT 数据转为 HTTP 接口",
-  "main": "server.js",
-  "dependencies": {
-    "mqtt": "^5.0.0"
-  }
-}
