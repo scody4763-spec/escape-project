@@ -1,0 +1,226 @@
+package mqtt
+
+import (
+	"aiot/internal/consts"
+	"aiot/internal/global"
+	"aiot/internal/logic/device_alert"
+	"aiot/internal/logic/email"
+	wslogic "aiot/internal/logic/ws"
+	"aiot/internal/model/entity"
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
+
+	paho "github.com/eclipse/paho.mqtt.golang"
+	"github.com/gogf/gf/v2/frame/g"
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+
+	"aiot/internal/dao"
+)
+
+// SensorPayload 表示传感器数据字段（全部使用指针以区分零值和缺失值）。
+type SensorPayload struct {
+	AQI                  *float64 `json:"AQI"`
+	TVOC                 *float64 `json:"TVOC"`
+	ECO2                 *float64 `json:"ECO2"`
+	Temp                 *float64 `json:"temp"`
+	Hum                  *float64 `json:"hum"`
+	ElectricityCurrent   *bool    `json:"electricity_Current"`
+	Electricity          *float64 `json:"electricity"`
+	ESP32FiresFlag       *bool    `json:"ESP32_fires_flag"`
+	ESP32ElectricityFlag *bool    `json:"ESP32_electricity_flag"`
+	Buzzer               *int     `json:"buzzer"`
+}
+
+// Start 初始化并连接 MQTT 客户端，然后订阅传感器数据主题。
+func Start(ctx context.Context) error {
+	broker := g.Cfg().MustGet(ctx, "mqtt.broker").String()
+	clientId := g.Cfg().MustGet(ctx, "mqtt.clientId").String()
+	username := g.Cfg().MustGet(ctx, "mqtt.username").String()
+	password := g.Cfg().MustGet(ctx, "mqtt.password").String()
+	topic := g.Cfg().MustGet(ctx, "mqtt.topicSensorData").String()
+
+	topicHeartbeat := g.Cfg().MustGet(ctx, "mqtt.topicSignboardHeartbeat", "signboard/heartbeat").String()
+
+	opts := paho.NewClientOptions().
+		AddBroker(broker).
+		SetClientID(clientId).
+		SetUsername(username).
+		SetPassword(password).
+		SetAutoReconnect(true).
+		SetOnConnectHandler(func(c paho.Client) {
+			g.Log().Infof(ctx, "MQTT connected, subscribing to %s and %s", topic, topicHeartbeat)
+			c.Subscribe(topic, 0, func(_ paho.Client, msg paho.Message) {
+				handleMessage(ctx, msg.Payload())
+			})
+			c.Subscribe(topicHeartbeat, 0, func(_ paho.Client, msg paho.Message) {
+				handleHeartbeat(ctx, msg.Payload())
+			})
+		}).
+		SetConnectionLostHandler(func(_ paho.Client, err error) {
+			g.Log().Warningf(ctx, "MQTT connection lost: %v", err)
+		})
+
+	client := paho.NewClient(opts)
+	token := client.Connect()
+	token.WaitTimeout(10 * time.Second)
+	if err := token.Error(); err != nil {
+		return fmt.Errorf("mqtt connect: %w", err)
+	}
+
+	global.MQTTClient = client
+	g.Log().Infof(ctx, "MQTT client started, broker=%s", broker)
+	return nil
+}
+
+// handleMessage 处理原始 MQTT 传感器数据消息。
+func handleMessage(ctx context.Context, payload []byte) {
+	// 消息格式: { "ESP32_MAC": { ...fields... } }
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(payload, &raw); err != nil {
+		g.Log().Warningf(ctx, "mqtt: failed to parse message: %v", err)
+		return
+	}
+
+	for mac, dataRaw := range raw {
+		var data SensorPayload
+		if err := json.Unmarshal(dataRaw, &data); err != nil {
+			g.Log().Warningf(ctx, "mqtt: failed to parse sensor data for %s: %v", mac, err)
+			continue
+		}
+
+		// 前端订阅的MAC格式是 ESP32_XX:XX:XX:XX:XX:XX
+		wsMac := mac
+
+		// 0. 刷新传感器在线状态（数据上报即在线，TTL=90s 自动过期即离线）
+		g.Redis().Do(ctx, "SETEX", consts.SensorStatusKey(wsMac), 90, "1")
+
+		// 1. 写入 InfluxDB v2
+		go writeToInfluxDB(ctx, mac, &data)
+
+		// 2. 推送到已订阅的 WebSocket
+		go wslogic.Push(wsMac, map[string]interface{}{wsMac: data})
+
+		// 3. 检查告警条件
+		go checkAlerts(ctx, wsMac, &data)
+	}
+}
+
+// SignboardHeartbeat 表示指示牌心跳消息格式。
+type SignboardHeartbeat struct {
+	BoardMac   string   `json:"board_mac"`
+	Signboards []string `json:"signboards"`
+	Timestamp  int64    `json:"timestamp"`
+}
+
+// handleHeartbeat 处理指示牌心跳消息，刷新指示牌在线状态。
+func handleHeartbeat(ctx context.Context, payload []byte) {
+	var hb SignboardHeartbeat
+	if err := json.Unmarshal(payload, &hb); err != nil {
+		g.Log().Warningf(ctx, "mqtt: failed to parse heartbeat: %v", err)
+		return
+	}
+
+	redis := g.Redis()
+	for _, mac := range hb.Signboards {
+		redis.Do(ctx, "SETEX", consts.SignboardStatusKey(mac), 90, "1")
+	}
+	g.Log().Debugf(ctx, "heartbeat from board %s, signboards: %v", hb.BoardMac, hb.Signboards)
+}
+
+// writeToInfluxDB 将传感器数据作为数据点写入 InfluxDB v2。
+func writeToInfluxDB(ctx context.Context, mac string, data *SensorPayload) {
+	if global.InfluxDB == nil {
+		return
+	}
+
+	// 构建 tags 和 fields
+	tags := map[string]string{
+		"mac_address": mac,
+	}
+	fields := map[string]interface{}{}
+
+	if data.AQI != nil {
+		fields["AQI"] = *data.AQI
+	}
+	if data.TVOC != nil {
+		fields["TVOC"] = *data.TVOC
+	}
+	if data.ECO2 != nil {
+		fields["ECO2"] = *data.ECO2
+	}
+	if data.Temp != nil {
+		fields["temp"] = *data.Temp
+	}
+	if data.Hum != nil {
+		fields["hum"] = *data.Hum
+	}
+	if data.Electricity != nil {
+		fields["electricity"] = *data.Electricity
+	}
+	if data.Buzzer != nil {
+		fields["buzzer"] = float64(*data.Buzzer)
+	}
+
+	// 如果没有任何字段则跳过写入
+	if len(fields) == 0 {
+		return
+	}
+
+	// 创建数据点
+	point := influxdb2.NewPoint("sensor_data", tags, fields, time.Now())
+
+	// 使用阻塞写入 API
+	writeAPI := global.InfluxDB.WriteAPIBlocking(global.InfluxDBOrg, global.InfluxDBBucket)
+	if err := writeAPI.WritePoint(ctx, point); err != nil {
+		g.Log().Warningf(ctx, "influxdb write error for %s: %v", mac, err)
+	}
+}
+
+// checkAlerts 检查传感器数据的告警条件，创建告警并发送邮件。
+func checkAlerts(ctx context.Context, mac string, data *SensorPayload) {
+        if data.ESP32FiresFlag != nil && *data.ESP32FiresFlag {
+                go email.SendAlert(ctx, 999, "测试地点", "火灾报警测试邮件")
+        }
+        if data.ESP32FiresFlag != nil && *data.ESP32FiresFlag {
+                go email.SendAlert(ctx, 999, "测试地点", "火灾报警测试邮件")
+        }
+	sensor, _ := dao.Sensor.GetByMacWithCache(ctx, mac)
+	if sensor == nil {
+		return
+	}
+	if data.ESP32FiresFlag != nil && *data.ESP32FiresFlag {
+		alert := &entity.DeviceAlert{
+			DeviceType: consts.DeviceTypeSensor,
+			DeviceId:   sensor.Id,
+			MacAddress: mac,
+			AlertType:  consts.AlertTypeFire,
+			AlertDesc:  fmt.Sprintf("传感器 %s 检测到火焰", mac),
+		}
+		alertId, err := device_alert.CreateIfNotExists(ctx, alert)
+		if err != nil {
+			g.Log().Warningf(ctx, "create fire alert error: %v", err)
+		}
+		if alertId > 0 {
+			go email.SendAlert(ctx, alertId, sensor.Address, fmt.Sprintf("传感器 %s 检测到火焰，请立即撤离！", mac))
+		}
+	}
+
+	if data.ESP32ElectricityFlag != nil && *data.ESP32ElectricityFlag {
+		alert := &entity.DeviceAlert{
+			DeviceType: consts.DeviceTypeSensor,
+			DeviceId:   sensor.Id,
+			MacAddress: mac,
+			AlertType:  consts.AlertTypeElectricity,
+			AlertDesc:  fmt.Sprintf("传感器 %s 检测到电流异常", mac),
+		}
+		alertId, err := device_alert.CreateIfNotExists(ctx, alert)
+		if err != nil {
+			g.Log().Warningf(ctx, "create electricity alert error: %v", err)
+		}
+		if alertId > 0 {
+			go email.SendAlert(ctx, alertId, sensor.Address, fmt.Sprintf("传感器 %s 电流异常，请立即检查！", mac))
+		}
+	}
+}

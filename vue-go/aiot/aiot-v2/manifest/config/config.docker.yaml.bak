@@ -1,0 +1,52 @@
+# Docker 环境配置 — 服务名对应 docker-compose 中的 service name
+server:
+  address: ":8080"
+  openapiPath: "/api.json"
+  swaggerPath: "/swagger"
+
+logger:
+  level: "all"
+  stdout: true
+
+database:
+  default:
+    link: "mysql:root:aiot123456@tcp(mysql:3306)/aiot?parseTime=true&charset=utf8mb4&loc=Local"
+    maxOpen: 20
+    maxIdle: 10
+
+redis:
+  default:
+    address: "redis:6379"
+    pass: ""
+    db: 0
+
+influxdb:
+  url: "http://influxdb:8086"
+  token: "aiot-dev-token"
+  org: "aiot"
+  bucket: "aiot"
+
+mqtt:
+  broker: "tcp://emqx:1883"
+  clientId: "aiot-backend"
+  username: ""
+  password: ""
+  topicSensorData: "sensordata"
+
+mail:
+  host: "smtp.qq.com"
+  port: 465
+  username: "cjsakana@qq.com"
+  password: "hmncunfccolgdgig"
+  from: "cjsakana@qq.com"
+  fromName: "AIoT报警系统"
+  ssl: true
+  recipients:
+    - "2270412691@qq.com"
+
+jwt:
+  secret: "aiot-jwt-secret-change-in-production"
+
+algorithm:
+  url: "http://host.docker.internal:8090"
+  timeout: 30
